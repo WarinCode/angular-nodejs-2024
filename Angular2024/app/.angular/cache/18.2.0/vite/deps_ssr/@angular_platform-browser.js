@@ -36,7 +36,8 @@ import {
   withHttpTransferCacheOptions,
   withI18nSupport,
   withNoHttpTransferCache
-} from "./chunk-6AZVI52A.js";
+} from "./chunk-A4LEQKZW.js";
+import "./chunk-S4OFAPSR.js";
 import {
   getDOM
 } from "./chunk-AVVMBAEB.js";

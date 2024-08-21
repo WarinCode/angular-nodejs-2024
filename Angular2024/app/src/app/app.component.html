@@ -1,17 +1,12 @@
-<p>user list</p>
-<ol>
-  @for (user of users; track user) {
-    <li>{{ user }}</li>
-  }
-</ol>
+<h1>Angular Router App</h1>
 
-<div>fname = <input type="text" [(ngModel)]="fname"></div>
-<div>lname = <input type="text" [(ngModel)]="lname"></div>
-<div>{{ fname }}  {{ lname }}</div>
+<ul>
+    <li>
+        <a routerLink="/firstPage/10">First Page</a>
+    </li>
+    <li>
+        <a routerLink="/secondPage">Second Page</a>
+    </li>
+</ul>
 
-<div (click)="toggle()">
-  <input type="checkbox" [(ngModel)]="checked">
-  click here for toggle
-</div>
-
-<button (click)="myFunction()">show alert</button>
+<router-outlet></router-outlet>

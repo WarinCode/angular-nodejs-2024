@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -9,7 +9,6 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './employee.component.css'
 })
 export class EmployeeComponent {
-  name: string = "kob";
-  cssClass: string = "myClass"
+  @Input() fullName: string = "default value";
 }
   
