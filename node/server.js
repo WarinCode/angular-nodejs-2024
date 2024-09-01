@@ -7,10 +7,76 @@ const prisma = new PrismaClient();
 
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const fileUpload = require("express-fileupload");
+const fs = require("fs");
+
 dotenv.config();
 
+app.use(fileUpload());
+app.use("/uploads", express.static("uploads"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+const bookController = require("./controllers/BookController");
+
+app.use("/book", bookController);
+
+app.get("/readFile", (req, res) => {
+    try {
+        fs.readFile("test.txt", (err, data) => {
+            if(err){
+                throw err;
+            }
+
+            res.send(data);
+        })
+    } catch(e){
+        res.status(500).send({ error: e.message });
+    }
+})
+app.get("/writeFile", (req, res) => {
+    try {
+        fs.writeFile("test.txt", "hello by kob", (err) => {
+            if(err){
+                throw err;
+            }
+        })
+        res.send({ message: "success" });
+    } catch(e){
+        res.status(500).send({ error: e.message });
+    }
+})
+app.get("/removeFile", (req, res) => {
+    try {
+        fs.unlinkSync("test.txt");
+        res.send({ message: "success" });
+    } catch(e){
+        res.status(500).send({ error: e.message });
+    }
+})
+app.get("/fileExists", (req, res) => {
+    try {
+        const found = fs.existsSync("package.json");
+        res.send({ found: found });
+    } catch(e){
+        res.status(500).send({ error: e.message });
+    }
+})
+app.post("/book/testUpload", (req, res) => {
+    try {
+        const myFile = req.files.myFile;
+
+        myFile.mv("./uploads/" + myFile.name, (err) => {
+            if(err){
+                res.status(500).send({ error: e.message });
+            }
+
+            res.send({ message: "success" });
+        })
+    } catch(e){
+        res.status(500).send({ error: e.message });
+    }
+})
 
 function checkSignIn(req, res, next){
     try {
@@ -26,6 +92,34 @@ function checkSignIn(req, res, next){
         res.status(500).send({ error: e.message });
     }
 }
+app.get("/multiModel", async (req, res) => {
+    try {
+        const data = await prisma.customer.findMany({
+            include: {
+                Order: {
+                    include: {
+                        OrderDetail: true
+                    }
+                }
+            }
+        })
+        res.send({ results: data });
+    } catch(e){
+        res.status(500).send({ error: e.message });
+    }
+})
+app.get("/oneToMany", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            include: {
+                OrderDetails: true
+            }
+        })
+        res.send({ results: data });
+    } catch(e){
+        res.status(500).send({ error: e.message });
+    }
+})
 app.get("/oneToOne", async (req, res) => {
     try {
         const data =await prisma.orderDetail.findMany({
