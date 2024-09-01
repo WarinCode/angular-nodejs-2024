@@ -5,23 +5,83 @@ const bodyParser = require("body-parser");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+dotenv.config();
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+function checkSignIn(req, res, next){
+    try {
+        const secret = process.env.TOKEN_SECRET;
+        const token = req.headers['authorization'];
+        const result = jwt.verify(token, secret);
+        
+        if(result != undefined){
+            next();
+        }
+    } catch(e){
+        console.log(e);
+        res.status(500).send({ error: e.message });
+    }
+}
+app.get("/oneToOne", async (req, res) => {
+    try {
+        const data =await prisma.orderDetail.findMany({
+            include: {
+                book: true,
+            }
+        })
+        res.send({ results: data });
+    } catch(e){
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/user/info", checkSignIn, (req, res) => {
+    res.send("hello back office user info");
+})
+ 
+app.get("/user/verifyToken", (req, res) => {
+    try {
+        const secret = process.env.TOKEN_SECRET;
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAwLCJuYW1lIjoia29iIiwibGV2ZWwiOiJhZG1pbiIsImlhdCI6MTcyNTE2ODM1MCwiZXhwIjoxNzI1MjU0NzUwfQ.npRyFfC05-xrh6MU_PSVQZ9uWj8HmYZ-LAPbj8A8KlY";
+        const result = jwt.verify(token, secret);
+
+        res.send({ result: result });
+    } catch(e){
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/user/createTable", (req, res) => {
+    try {
+        const secret = process.env.TOKEN_SECRET;
+        const payload = {
+            id: 100,
+            name: 'kob',
+            level: 'admin'
+        }
+        const token = jwt.sign(payload, secret, { expiresIn: "1d" });
+        
+        res.send({ token: token });
+    } catch(e){
+        res.status(500).send({ error: e });
+    }
+})
 app.get("/book/list", async (req, res) => {
     const data = await prisma.book.findMany();
     res.send({ data: data });
 });
 app.post("/book/create", async (req, res) => {
     const data = req.body;
-    const result = await prisma.book.create({
+    const results = await prisma.book.create({
         data: data
     });
 
-    res.send({ result: result });
+    res.send({ results: results });
 });
 app.post("/book/createManual", async (req, res) => {
-    const result = await prisma.book.create({
+    const results = await prisma.book.create({
         data: {
             isbn: "1002",
             name: "PHP",
@@ -29,7 +89,7 @@ app.post("/book/createManual", async (req, res) => {
         }
     });
 
-    res.send({ result: result });
+    res.send({ results: results });
 })
 app.put("/book/update/:id", async (req, res) => {
     try {
@@ -72,7 +132,7 @@ app.post("/book/search", async (req, res) => {
             }
         });
 
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.status(500).send({ error: e });
     }
@@ -88,7 +148,7 @@ app.post("/book/startsWith", async (req, res) => {
             }
         });
 
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.status(500).send({ error: e });
     }
@@ -104,7 +164,7 @@ app.post("/book/endsWith", async (req, res) => {
             }
         });
 
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.status(500).send({ error: e });
     }
@@ -116,7 +176,7 @@ app.get("/book/orderBy", async (req, res) => {
                 price: "asc"
             }
         })
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.stauts(500).send({ error: e });
     }
@@ -130,7 +190,7 @@ app.get("/book/gt", async (req, res) => {
                 }
             }
         })
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.stauts(500).send({ error: e });
     }
@@ -144,7 +204,7 @@ app.get("/book/lt", async (req, res) => {
                 }
             }
         })
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.stauts(500).send({ error: e });
     }
@@ -158,7 +218,7 @@ app.get("/book/notNull", async (req, res) => {
                 }
             }
         })
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.stauts(500).send({ error: e });
     }
@@ -170,7 +230,7 @@ app.get("/book/null", async (req, res) => {
                 detail: null
             }
         })
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.stauts(500).send({ error: e });
     }
@@ -185,9 +245,109 @@ app.get("/book/between", async (req, res) => {
                 }
             }
         })
-        res.send({ result: data });
+        res.send({ results: data });
     } catch (e) {
         res.stauts(500).send({ error: e });
+    }
+})
+app.get("/book/sum", async (req, res) => {
+    try {
+        const data = await prisma.book.aggregate({
+            _sum: {
+                price: true
+            }
+        });
+
+        res.send({ results: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/book/max", async (req, res) => {
+    try {
+        const data = await prisma.book.aggregate({
+            _max: {
+                price: true
+            }
+        });
+
+        res.send({ results: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/book/min", async (req, res) => {
+    try {
+        const data = await prisma.book.aggregate({
+            _min: {
+                price: true
+            }
+        });
+
+        res.send({ results: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/book/avg", async (req, res) => {
+    try {
+        const data = await prisma.book.aggregate({
+            _avg: {
+                price: true
+            }
+        });
+
+        res.send({ results: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/book/findYearMonthDay", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            where: {
+                registerDate: new Date("2024-05-08")
+            }
+        });
+
+        res.send({ results: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/book/findYearMonth", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            where: {
+                registerDate: {
+                    gte: new Date("2024-05-01"), // start
+                    lte: new Date("2024-05-31"), // end
+                }
+            }
+        });
+
+        res.send({ results: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/book/findYear", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            select: {
+                registerDate: true
+            },
+            where: {
+                registerDate: {
+                    gte: new Date("2024-01-01"), // start
+                    lte: new Date("2024-12-31"), // end
+                }
+            }
+        });
+
+        res.send({ results: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
     }
 })
 
