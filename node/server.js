@@ -9,9 +9,11 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const fileUpload = require("express-fileupload");
 const fs = require("fs");
+const cors = require("cors");
 
 dotenv.config();
 
+app.use(cors());
 app.use(fileUpload());
 app.use("/uploads", express.static("uploads"));
 app.use(bodyParser.json());
@@ -20,29 +22,69 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const bookController = require("./controllers/BookController");
 
 app.use("/book", bookController);
+app.get("/readExcel", async (req, res) => {
+    try {
+        const excel = require("exceljs");
+        const wb = new excel.Workbook();
+        await wb.xlsx.readFile("productExport.xlsx");
+        const ws = wb.getWorksheet(1);
 
+        for (let i = 1; i <= ws.rowCount; i++) {
+            const row = ws.getRow(i);
+            const barcode = row.getCell(1).value;
+            const name = row.getCell(2).value;
+            const cost = row.getCell(3).value;
+            const sale = row.getCell(4).value;
+            const send = row.getCell(5).value;
+            const unit = row.getCell(6).value;
+            const point = row.getCell(7).value;
+            const productTypeId = row.getCell(8).value;
+
+            console.log(barcode, name, cost, sale, send, unit, point, productTypeId);
+        }
+        res.send({ message: "success" });
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+})
+
+app.get("/createPdf", (req, res) => {
+    try {
+        const PDFDocument = require("pdfkit");
+        const doc = new PDFDocument();
+
+        doc.pipe(fs.createWriteStream("output.pdf"));
+        doc.font("Kanit/Kanit-Medium.ttf").fontSize(25).text("สวัสดีทดสอบ ภาษาไทย!", 100, 100);
+        doc.addPage().fontSize(25).text("ภาษาไทยหน้า 2", 100, 100);
+        doc.end();
+
+        res.send({ message: "success" });
+    } catch (e) {
+        res.status(500).send({ error: e.message });
+    }
+})
 app.get("/readFile", (req, res) => {
     try {
         fs.readFile("test.txt", (err, data) => {
-            if(err){
+            if (err) {
                 throw err;
             }
 
             res.send(data);
         })
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e.message });
     }
 })
 app.get("/writeFile", (req, res) => {
     try {
         fs.writeFile("test.txt", "hello by kob", (err) => {
-            if(err){
+            if (err) {
                 throw err;
             }
         })
         res.send({ message: "success" });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e.message });
     }
 })
@@ -50,7 +92,7 @@ app.get("/removeFile", (req, res) => {
     try {
         fs.unlinkSync("test.txt");
         res.send({ message: "success" });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e.message });
     }
 })
@@ -58,7 +100,7 @@ app.get("/fileExists", (req, res) => {
     try {
         const found = fs.existsSync("package.json");
         res.send({ found: found });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e.message });
     }
 })
@@ -67,27 +109,27 @@ app.post("/book/testUpload", (req, res) => {
         const myFile = req.files.myFile;
 
         myFile.mv("./uploads/" + myFile.name, (err) => {
-            if(err){
+            if (err) {
                 res.status(500).send({ error: e.message });
             }
 
             res.send({ message: "success" });
         })
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e.message });
     }
 })
 
-function checkSignIn(req, res, next){
+function checkSignIn(req, res, next) {
     try {
         const secret = process.env.TOKEN_SECRET;
         const token = req.headers['authorization'];
         const result = jwt.verify(token, secret);
-        
-        if(result != undefined){
+
+        if (result != undefined) {
             next();
         }
-    } catch(e){
+    } catch (e) {
         console.log(e);
         res.status(500).send({ error: e.message });
     }
@@ -104,7 +146,7 @@ app.get("/multiModel", async (req, res) => {
             }
         })
         res.send({ results: data });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e.message });
     }
 })
@@ -116,26 +158,26 @@ app.get("/oneToMany", async (req, res) => {
             }
         })
         res.send({ results: data });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e.message });
     }
 })
 app.get("/oneToOne", async (req, res) => {
     try {
-        const data =await prisma.orderDetail.findMany({
+        const data = await prisma.orderDetail.findMany({
             include: {
                 book: true,
             }
         })
         res.send({ results: data });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e });
     }
 })
 app.get("/user/info", checkSignIn, (req, res) => {
     res.send("hello back office user info");
 })
- 
+
 app.get("/user/verifyToken", (req, res) => {
     try {
         const secret = process.env.TOKEN_SECRET;
@@ -143,7 +185,7 @@ app.get("/user/verifyToken", (req, res) => {
         const result = jwt.verify(token, secret);
 
         res.send({ result: result });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e });
     }
 })
@@ -156,9 +198,9 @@ app.get("/user/createTable", (req, res) => {
             level: 'admin'
         }
         const token = jwt.sign(payload, secret, { expiresIn: "1d" });
-        
+
         res.send({ token: token });
-    } catch(e){
+    } catch (e) {
         res.status(500).send({ error: e });
     }
 })
