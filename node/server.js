@@ -31,6 +31,165 @@ app.post("/book/createManual", async (req, res) => {
 
     res.send({ result: result });
 })
+app.put("/book/update/:id", async (req, res) => {
+    try {
+        await prisma.book.update({
+            data: {
+                isbn: "10022",
+                name: "test update",
+                price: 900
+            },
+            where: {
+                id: parseInt(req.params.id)
+            },
+        });
+        res.send({ message: "success" });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.delete("/book/remove/:id", async (req, res) => {
+    try {
+        await prisma.book.delete({
+            where: {
+                id: parseInt(req.params.id)
+            }
+        });
+
+        res.send({ message: "success" });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.post("/book/search", async (req, res) => {
+    try {
+        const keyword = req.body.keyword;
+        const data = await prisma.book.findMany({
+            where: {
+                name: {
+                    contains: keyword
+                }
+            }
+        });
+
+        res.send({ result: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.post("/book/startsWith", async (req, res) => {
+    try {
+        const keyword = req.body.keyword;
+        const data = await prisma.book.findMany({
+            where: {
+                name: {
+                    startsWith: keyword
+                }
+            }
+        });
+
+        res.send({ result: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.post("/book/endsWith", async (req, res) => {
+    try {
+        const keyword = req.body.keyword;
+        const data = await prisma.book.findMany({
+            where: {
+                name: {
+                    endsWith: keyword
+                }
+            }
+        });
+
+        res.send({ result: data });
+    } catch (e) {
+        res.status(500).send({ error: e });
+    }
+})
+app.get("/book/orderBy", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            orderBy: {
+                price: "asc"
+            }
+        })
+        res.send({ result: data });
+    } catch (e) {
+        res.stauts(500).send({ error: e });
+    }
+})
+app.get("/book/gt", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            where: {
+                price: {
+                    gt: 800 // > 800
+                }
+            }
+        })
+        res.send({ result: data });
+    } catch (e) {
+        res.stauts(500).send({ error: e });
+    }
+})
+app.get("/book/lt", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            where: {
+                price: {
+                    lt: 800 // < 800
+                }
+            }
+        })
+        res.send({ result: data });
+    } catch (e) {
+        res.stauts(500).send({ error: e });
+    }
+})
+app.get("/book/notNull", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            where: {
+                detail: {
+                    not: null
+                }
+            }
+        })
+        res.send({ result: data });
+    } catch (e) {
+        res.stauts(500).send({ error: e });
+    }
+})
+app.get("/book/null", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            where: {
+                detail: null
+            }
+        })
+        res.send({ result: data });
+    } catch (e) {
+        res.stauts(500).send({ error: e });
+    }
+})
+app.get("/book/between", async (req, res) => {
+    try {
+        const data = await prisma.book.findMany({
+            where: {
+                price: {
+                    lte: 900,
+                    gte: 500,
+                }
+            }
+        })
+        res.send({ result: data });
+    } catch (e) {
+        res.stauts(500).send({ error: e });
+    }
+})
 
 app.get("/", (req, res) => {
     res.send("hello world");
@@ -53,4 +212,8 @@ app.put("/myPut", (req, res) => {
 app.delete("/myDelete/:id", (req, res) => {
     res.send("my delete id =" + req.params.id);
 })
-app.listen(3001);
+
+
+app.listen(3001, () => {
+    console.log("Server starting on http://localhost:3001");
+});
