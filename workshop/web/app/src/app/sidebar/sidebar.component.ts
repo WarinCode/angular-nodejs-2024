@@ -8,5 +8,9 @@ import { Component } from '@angular/core';
   styleUrl: './sidebar.component.css'
 })
 export class SidebarComponent {
+  name: string = "";
 
+  ngOnInit(){
+    this.name = localStorage.getItem("angular_name")!;
+  }
 }

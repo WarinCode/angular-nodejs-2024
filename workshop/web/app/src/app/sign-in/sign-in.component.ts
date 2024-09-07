@@ -18,6 +18,10 @@ export class SignInComponent {
   constructor(private http: HttpClient){
   };
 
+  ngOnInit(){
+    this.token = localStorage.getItem("angular_token")!;
+  }
+
   signIn(){
     if(this.username == '' || this.password == ''){
       Swal.fire({
@@ -32,11 +36,11 @@ export class SignInComponent {
       }
 
       try {
-        this.http.post("http://localhost/3000/api/user/signin", payload)
+        this.http.post("http://localhost:3000/api/user/signIn", payload)
         .subscribe((res: any) => {
           this.token = res.token;
           localStorage.setItem("angular_token", this.token);
-          localStorage.setItem("angular_username", this.username);
+          localStorage.setItem("angular_name", res.name);
 
           location.reload();
 
